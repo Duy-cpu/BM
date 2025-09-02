@@ -6,7 +6,8 @@ from dotenv import load_dotenv
 import os
 from datetime import datetime
 import random
-
+import webserver
+webserver.keep_alive()
 load_dotenv()
 token = os.getenv("DISCORD_TOKEN")  
 
@@ -317,3 +318,4 @@ async def quiz_2_9(ctx):
         await ctx.send("⏰ Hết thời gian trả lời rồi!")
         
 bot.run(token, log_handler=handler, log_level=logging.DEBUG)
+
