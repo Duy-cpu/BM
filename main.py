@@ -22,6 +22,10 @@ bay = ("cặc", "lồn", "địt", "đị","djt","dm","cc","cl","vcl","vl","đm"
 
 @bot.event
 async def on_ready():
+    print(f"Logged in as {bot.user.name}")
+    
+@bot.event
+async def on_ready():
     now = datetime.now()
     if now.month == 9 and now.day == 2:
         for guild in bot.guilds:
@@ -44,9 +48,6 @@ async def auto_chuc_quoc_khanh():
         await asyncio.sleep(21600)  # 6 tiếng
 
 
-@bot.event
-async def on_ready():
-    print(f"Logged in as {bot.user.name}")
 
 @bot.event
 async def on_member_join(member):
@@ -355,5 +356,6 @@ async def quiz_2_9(ctx):
         await ctx.send("⏰ Hết thời gian trả lời rồi!")
         
 bot.run(token, log_handler=handler, log_level=logging.DEBUG)
+
 
 
