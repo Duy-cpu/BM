@@ -57,30 +57,67 @@ async def on_message(message):
     if message.author == bot.user:
         return
     content = message.content.lower()
+from datetime import datetime, timedelta
+import asyncio
+import re
+
+violation_tracker = {}  # {user_id: {"count": int, "date": date}}
+
 @bot.event
 async def on_message(message):
-    # Ignore messages from bots
     if message.author.bot:
         return
 
-    # Convert message content to lowercase and split into words
     content = message.content.lower()
-    words = content.split()
+    words = re.findall(r'\b\w+\b', content)
 
-    # Define your list of banned words (make sure 'bay' is defined somewhere) # Example set
     if any(word in bay for word in words):
         try:
             await message.delete()
-            await message.channel.send(
-                f"{message.author.mention} 🚫 Không dùng từ bậy trong server!"
-            )
         except discord.Forbidden:
-            await message.channel.send(
-                f"{message.author.mention} ⚠️ Bot không có quyền xóa tin nhắn."
+            await message.channel.send(f"{message.author.mention} ⚠️ Bot không có quyền xóa tin nhắn.")
+
+        user_id = message.author.id
+        today = datetime.now().date()
+
+        # Reset nếu qua ngày
+        if user_id in violation_tracker:
+            if violation_tracker[user_id]["date"] != today:
+                violation_tracker[user_id] = {"count": 1, "date": today}
+            else:
+                violation_tracker[user_id]["count"] += 1
+        else:
+            violation_tracker[user_id] = {"count": 1, "date": today}
+
+        count = violation_tracker[user_id]["count"]
+
+        if count == 1:
+            warning_msg = await message.channel.send(
+                f"{message.author.mention} ⚠️ Cảnh cáo lần 1. Nếu tiếp tục sẽ bị mute. (Tin nhắn này sẽ biến mất sau 10 giây)"
             )
+            await asyncio.sleep(10)
+            try:
+                await warning_msg.delete()
+            except discord.Forbidden:
+                pass
+
+            # Thêm thông báo về thời gian reset
+            await message.channel.send(
+                f"{message.author.mention} ⏳ Nếu không tái phạm, cảnh cáo sẽ được reset sau 24 giờ."
+            )
+
+        else:
+            await message.channel.send(
+                f"{message.author.mention} 🔇 Bạn đã vi phạm {count} lần. Mute 20 phút."
+            )
+            try:
+                await message.author.timeout(
+                    timedelta(minutes=20), reason=f"Vi phạm ngôn ngữ lần {count}"
+                )
+            except Exception:
+                await message.channel.send("⚠️ Bot không thể mute người này.")
         return
 
-    # Allow commands to be processed
     await bot.process_commands(message)
 @bot.command()
 async def hello(ctx):
@@ -318,4 +355,5 @@ async def quiz_2_9(ctx):
         await ctx.send("⏰ Hết thời gian trả lời rồi!")
         
 bot.run(token, log_handler=handler, log_level=logging.DEBUG)
+
 
